@@ -1,12 +1,15 @@
 <?php
 namespace App\Http\Controllers;
 
-use App\Models\User;  // Changed from App\User
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use App\Traits\ApiResponder;  // Add this line
 
 class UserController extends Controller
 {
+    use ApiResponder;  // Add this line inside the class
+    
     private $request;
     
     public function __construct(Request $request)
@@ -20,10 +23,7 @@ class UserController extends Controller
     public function index()
     {
         $users = User::all();
-        return response()->json([
-            'data' => $users,
-            'message' => 'Users retrieved successfully'
-        ], 200);
+        return $this->successResponse($users);  // Changed from response()->json()
     }
     
     /**
@@ -34,15 +34,10 @@ class UserController extends Controller
         $user = User::find($id);
         
         if (!$user) {
-            return response()->json([
-                'message' => 'User not found'
-            ], 404);
+            return $this->errorResponse('User not found', Response::HTTP_NOT_FOUND);  // Changed
         }
         
-        return response()->json([
-            'data' => $user,
-            'message' => 'User retrieved successfully'
-        ], 200);
+        return $this->successResponse($user);  // Changed
     }
     
     /**
@@ -60,10 +55,7 @@ class UserController extends Controller
         
         $user = User::create($request->all());
         
-        return response()->json([
-            'data' => $user,
-            'message' => 'User created successfully'
-        ], 201);
+        return $this->successResponse($user, Response::HTTP_CREATED);  // Changed
     }
     
     /**
@@ -82,25 +74,18 @@ class UserController extends Controller
         $user = User::find($id);
         
         if (!$user) {
-            return response()->json([
-                'message' => 'User not found'
-            ], 404);
+            return $this->errorResponse('User not found', Response::HTTP_NOT_FOUND);  // Changed
         }
         
         $user->fill($request->all());
         
         if ($user->isClean()) {
-            return response()->json([
-                'message' => 'At least one value must change'
-            ], 422);
+            return $this->errorResponse('At least one value must change', Response::HTTP_UNPROCESSABLE_ENTITY);  // Changed
         }
         
         $user->save();
         
-        return response()->json([
-            'data' => $user,
-            'message' => 'User updated successfully'
-        ], 200);
+        return $this->successResponse($user);  // Changed
     }
     
     /**
@@ -111,15 +96,11 @@ class UserController extends Controller
         $user = User::find($id);
         
         if (!$user) {
-            return response()->json([
-                'message' => 'User not found'
-            ], 404);
+            return $this->errorResponse('User not found', Response::HTTP_NOT_FOUND);  // Changed
         }
         
         $user->delete();
         
-        return response()->json([
-            'message' => 'User deleted successfully'
-        ], 200);
+        return $this->successResponse($user);  // Changed
     }
 }

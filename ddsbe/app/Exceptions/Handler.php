@@ -1,16 +1,20 @@
 <?php
-
 namespace App\Exceptions;
 
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Validation\ValidationException;
 use Laravel\Lumen\Exceptions\Handler as ExceptionHandler;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Throwable;
+use App\Traits\ApiResponse;  // Add this
 
 class Handler extends ExceptionHandler
 {
+    use ApiResponse;  // Add this
+    
     /**
      * A list of the exception types that should not be reported.
      *
@@ -30,8 +34,6 @@ class Handler extends ExceptionHandler
      *
      * @param  \Throwable  $exception
      * @return void
-     *
-     * @throws \Exception
      */
     public function report(Throwable $exception)
     {
@@ -44,11 +46,43 @@ class Handler extends ExceptionHandler
      * @param  \Illuminate\Http\Request  $request
      * @param  \Throwable  $exception
      * @return \Illuminate\Http\Response|\Illuminate\Http\JsonResponse
-     *
-     * @throws \Throwable
      */
     public function render($request, Throwable $exception)
     {
-        return parent::render($request, $exception);
+        // HTTP not found
+        if ($exception instanceof HttpException) {
+            $code = $exception->getStatusCode();
+            $message = Response::$statusTexts[$code];
+            return $this->errorResponse($message, $code);
+        }
+        
+        // Model not found
+        if ($exception instanceof ModelNotFoundException) {
+            $model = strtolower(class_basename($exception->getModel()));
+            return $this->errorResponse("Does not exist any instance of {$model} with the given id", Response::HTTP_NOT_FOUND);
+        }
+
+        // Validation exception
+        if ($exception instanceof ValidationException) {
+            $errors = $exception->validator->errors()->getMessages();
+            return $this->errorResponse($errors, Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        // Access forbidden
+        if ($exception instanceof AuthorizationException) {
+            return $this->errorResponse($exception->getMessage(), Response::HTTP_FORBIDDEN);
+        }
+        // Unauthorized access
+        if ($exception instanceof AuthenticationException) {
+            return $this->errorResponse($exception->getMessage(), Response::HTTP_UNAUTHORIZED);
+        }
+
+        // If in development environment, show detailed error
+        if (env('APP_DEBUG', false)) {
+            return parent::render($request, $exception);
+        }
+
+        // Unexpected error
+        return $this->errorResponse('Unexpected error. Try later', Response::HTTP_INTERNAL_SERVER_ERROR);
     }
 }
