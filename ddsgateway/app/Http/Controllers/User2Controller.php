@@ -10,7 +10,7 @@ class User2Controller extends Controller
 {
     use ApiResponser;
 
-    public $user2Service;
+    protected $user2Service;
 
     public function __construct(User2Service $user2Service)
     {
@@ -19,31 +19,31 @@ class User2Controller extends Controller
 
     public function index()
     {
-        $response = $this->user2Service->obtainUsers2();
-        return $this->successResponse($response);
+        return $this->successResponse($this->user2Service->obtainUsers2());
     }
 
     public function add(Request $request)
     {
-        $response = $this->user2Service->createUser2($request->all());
-        return $this->successResponse($response, Response::HTTP_CREATED);
+        return $this->successResponse(
+            $this->user2Service->createUser2($request->all()), 
+            Response::HTTP_CREATED
+        );
     }
 
     public function show($id)
     {
-        $response = $this->user2Service->obtainUser2($id);
-        return $this->successResponse($response);
+        return $this->successResponse($this->user2Service->obtainUser2($id));
     }
 
     public function update(Request $request, $id)
     {
-        $response = $this->user2Service->editUser2($request->all(), $id);
-        return $this->successResponse($response);
+        return $this->successResponse(
+            $this->user2Service->editUser2($request->all(), $id)
+        );
     }
 
     public function delete($id)
     {
-        $response = $this->user2Service->deleteUser2($id);
-        return $this->successResponse($response);
+        return $this->successResponse($this->user2Service->deleteUser2($id));
     }
 }
