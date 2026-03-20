@@ -28,3 +28,7 @@ $router->get('/debug', function () use ($router) {
         'api_responder_exists' => trait_exists('App\Traits\ApiResponder'),
     ];
 });
+
+// Job routes
+$router->get('/usersjob', 'UserJobController@index');
+$router->get('/usersjob/{id}', 'UserJobController@show');
